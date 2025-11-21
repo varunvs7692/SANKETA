@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Adaptive Urban Traffic AI — Sanketa</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <meta name="description" content="Adaptive AI-driven traffic signal optimization and real-time countdown transparency." />
+  </head>
+  <body>
+    <header id="site-header"></header>
+    <main class="section">
+      <div class="container narrow">
+        <h1>Sanketa Technology Deep Dive</h1>
+        <p class="muted">Edge AI traffic system for Bharat: adaptive, solar-powered, priority aware.</p>
+
+        <section>
+          <h2>Challenge</h2>
+          <p>Rapidly growing urban corridors and mixed vehicle classes overwhelm legacy fixed-timer signals—wasting time, fuel, and producing avoidable emissions. Lack of public countdown visibility fuels unpredictable driving behavior.</p>
+        </section>
+
+        <section>
+          <h2>Objectives</h2>
+          <ul>
+            <li>Adaptive phase timing from live multi-sensor fusion.</li>
+            <li>Offline resilience & solar energy independence.</li>
+            <li>Priority routing for ambulances & high-capacity vehicles.</li>
+            <li>Open countdown feed for navigation & commuter transparency.</li>
+            <li>Sustainable reduction in idle emissions & noise.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Architecture Overview</h2>
+          <ul>
+            <li><strong>Edge Controller:</strong> Rugged unit fusing camera + radar + legacy loop signals; holds models locally.</li>
+            <li><strong>Sensing:</strong> Video for classification, radar for all-weather presence, loops for redundancy.</li>
+            <li><strong>Streaming:</strong> Secure MQTT/gRPC uplink with redundancy.</li>
+            <li><strong>Central (Optional):</strong> Aggregated analytics, remote updates & fleet-wide optimization experiments.</li>
+            <li><strong>APIs:</strong> Internal optimization, public SPaT (Signal Phase & Timing), ETA, and metrics.</li>
+            <li><strong>Storage:</strong> Time-series (phase + queues), object storage (clips), feature store (ML features).</li>
+            <li><strong>Dashboard:</strong> Live map, queue heatmaps, overrides, audit logs.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>AI & Optimization Strategy</h2>
+          <p>We apply hybrid control: classical safety-constrained logic plus predictive and reinforcement learning components.</p>
+          <ul>
+            <li><strong>Arrival Prediction:</strong> Short-horizon temporal models (queue clearance & platoon arrival).</li>
+            <li><strong>Phase optimization:</strong> Multi-agent RL in shadow mode until outperforming baseline algorithms (e.g., Webster/SCOOT/SCATS).</li>
+            <li><strong>Safety layer:</strong> Deterministic constraints enforce min/max greens, pedestrian clearance, and emergency preemption.</li>
+            <li><strong>Simulation loop:</strong> Offline SUMO replay with logged arrival profiles; drift detection triggers retraining.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Data Inputs</h2>
+          <ul>
+            <li>Real-time: Occupancy, approach speeds, queue lengths, turn counts, pedestrian actuations, weather, incidents.</li>
+            <li>Historical: Time-of-day patterns, seasonal indices, event calendars.</li>
+            <li>Derived: Arrival variability, platoon cohesion, spillback risk, pedestrian density.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Countdown Transparency</h2>
+          <p>Controllers publish SPaT updates (100–500 ms). Platform normalizes and adds confidence scores; public endpoints provide current phase and remaining seconds. Consumers receive WebSocket streams or REST snapshots. Graceful fallback to static cycle estimates if adaptive prediction confidence is low.</p>
+        </section>
+
+        <section>
+          <h2>Deployment Phases</h2>
+          <ol>
+            <li>Pilot (5–10 intersections): instrumentation & baseline metrics.</li>
+            <li>Shadow adaptive control off-peak; validation.</li>
+            <li>Corridor rollout with coordinated green waves.</li>
+            <li>Citywide expansion + public developer portal.</li>
+            <li>Continuous optimization: incident prediction & eco-driving advisories.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h2>Key Metrics</h2>
+          <ul>
+            <li>Average delay (sec/veh) & stop count.</li>
+            <li>Queue length percentiles & spillback events.</li>
+            <li>Travel time reliability (buffer index).</li>
+            <li>Estimated emissions reduction (CO₂, NOx).</li>
+            <li>Pedestrian wait and compliance.</li>
+            <li>API uptime & latency.</li>
+            <li>Safety proxies (hard braking, red-light violations).</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Risks & Mitigations</h2>
+          <ul>
+            <li><strong>Sensor failure:</strong> Health checks + multi-sensor redundancy.</li>
+            <li><strong>Model drift:</strong> Scheduled evaluation + fallback logic.</li>
+            <li><strong>Privacy:</strong> Edge anonymization, minimal retention, hashed probes.</li>
+            <li><strong>Cybersecurity:</strong> Segmented network, mTLS, continuous pen testing.</li>
+            <li><strong>Regulatory:</strong> Early authority engagement, transparent metrics.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Next Actions</h2>
+          <ul>
+            <li>Stakeholder workshops & intersection inventory.</li>
+            <li>Sensor deployment + baseline data collection.</li>
+            <li>Shadow optimization & performance comparison.</li>
+            <li>Public SPaT countdown API release.</li>
+            <li>Governance & data policy publication.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Value Snapshot</h2>
+          <p>Adaptive systems typically cut delay 10–30% and emissions 5–15%, with compounding benefits across corridors and connected vehicle ecosystems.</p>
+        </section>
+      </div>
+    </main>
+    <footer id="site-footer"></footer>
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>

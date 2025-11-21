@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Live Tracking — Sanketa</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-o9N1j7kGStbL1Q8g+Q7mP4bQnFnmptF6GU3H2Jf0z14="
+      crossorigin=""
+    />
+  </head>
+  <body>
+    <header id="site-header"></header>
+    <main class="section">
+      <div class="container">
+        <h1>Live Signal Tracking</h1>
+        <p class="muted">Minimal demo map with real-time phase & countdown (simulated).</p>
+        <div class="location-bar" aria-label="Tracking location controls">
+          <div class="loc-left">
+            <strong id="trkTitle">City</strong>
+            <span class="sep"></span>
+            <span id="trkUpdated" class="muted timestamp"></span>
+            <div class="loc-search" role="search">
+              <input id="trkSearch" type="text" placeholder="Search city" aria-label="Search city" />
+              <button id="trkSearchBtn" class="btn small" type="button" aria-label="Search">Search</button>
+              <button id="trkResetBtn" class="btn small" type="button" aria-label="Reset city">Reset</button>
+              <ul id="trkSuggest" class="loc-suggest" role="listbox" aria-label="City suggestions" hidden></ul>
+            </div>
+          </div>
+          <div class="loc-right">
+            <a id="trkOpen" class="btn small" target="_blank" rel="noopener" href="https://www.google.com/maps">Google Maps</a>
+            <a id="trkOpenOSM" class="btn small" target="_blank" rel="noopener" href="https://www.openstreetmap.org/">OpenStreetMap</a>
+            <a id="trkOpenSV" class="btn small" target="_blank" rel="noopener" aria-disabled="true">Street View</a>
+          </div>
+        </div>
+        <div class="stats-bar" aria-label="Live system summary">
+          <div class="stat-item"><span class="label">Backend:</span><span id="stat-backend" class="pill pill-warn">Checking...</span></div>
+          <div class="stat-item"><span class="label">Signals:</span><span id="stat-total">0</span></div>
+          <div class="stat-item"><span class="phase-tag green">G</span><span id="stat-green">0</span></div>
+          <div class="stat-item"><span class="phase-tag amber">A</span><span id="stat-amber">0</span></div>
+          <div class="stat-item"><span class="phase-tag red">R</span><span id="stat-red">0</span></div>
+          <div class="stat-item"><span class="label">Last:</span><span id="stat-refresh">—</span></div>
+          <div class="stat-item"><span class="label">Conn:</span><span id="stat-conn" class="pill pill-warn">Init</span></div>
+        </div>
+        <div id="map" aria-label="Adaptive traffic signal map"></div>
+        <div id="mapError" class="map-error" hidden aria-live="polite">Map library failed to load.</div>
+        <div id="mapLoading" class="map-loading" aria-live="polite">Loading live signal data…</div>
+        <div class="legend mt-16">
+          <span><span class="dot green"></span> GREEN</span>
+          <span><span class="dot amber"></span> AMBER</span>
+          <span><span class="dot red"></span> RED</span>
+        </div>
+        <div id="intersectionList" class="intersection-list mt-16"></div>
+        <div id="intersectionDetail" class="detail-panel hidden" aria-live="polite"></div>
+        <p class="muted mt-16">Data refreshes every second. Phases rotate for demonstration only.</p>
+      </div>
+    </main>
+    <footer id="site-footer"></footer>
+    <script src="assets/js/main.js"></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-o8R2jBkAuH2Xp0t+gC7vYQ+2QJwGgLrG6Hq9g2Z8S0A="
+      crossorigin=""
+    ></script>
+    <script>
+      // --- Basic state
+      let currentCity = null;
+      const RECENT_KEY = 'sanketa_recent_cities';
+      const state = { suggestions: [], activeIndex: -1, recent: [] };
+        const CITY_COORDS = {
+          'Pune':[18.5204,73.8567],'Mumbai':[19.0760,72.8777],'Delhi':[28.6139,77.2090],'Bengaluru':[12.9716,77.5946],
+          'Hyderabad':[17.3850,78.4867],'Chennai':[13.0827,80.2707],'Kolkata':[22.5726,88.3639],'Ahmedabad':[23.0225,72.5714],
+          'Jaipur':[26.9124,75.7873],'Surat':[21.1702,72.8311],'Nagpur':[21.1458,79.0882],'Indore':[22.7196,75.8577],
+          'Thane':[19.2183,72.9781],'Bhopal':[23.2599,77.4126],'Visakhapatnam':[17.6868,83.2185],'Patna':[25.5941,85.1376],
+          'Vadodara':[22.3072,73.1812],'Ghaziabad':[28.6692,77.4538],'Ludhiana':[30.9010,75.8573],'Agra':[27.1767,78.0081]
+        };
+      const urlParams = new URLSearchParams(location.search);
+      if(urlParams.get('city')){ currentCity = urlParams.get('city'); }
+      let map = null;
+      (function initTrackingMap(){
+        const mapEl = document.getElementById('map');
+        const mapErr = document.getElementById('mapError');
+        if(typeof window.L === 'undefined'){
+          if(mapEl){ mapEl.classList.add('map-fallback'); }
+          if(mapErr){ mapErr.hidden = false; mapErr.textContent = 'Map library failed to load. Check connection.'; }
+          return;
+        }
+        map = L.map('map').setView([12.9716, 77.5946], 12);
+        const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+        tiles.on('tileerror', ()=>{ if(mapErr){ mapErr.hidden=false; mapErr.textContent='Tiles unreachable. Showing local demo.'; } });
+      })();
+      const markers = new Map();
+      function colorForPhase(p){return p==='GREEN'?'#31c754':p==='AMBER'?'#ffb347':'#ff4d4d';}
+      let backoff = 1000; // start 1s
+      const maxBackoff = 10000; // cap 10s
+      let firstSuccess = false;
+      let __trkES = null;
+      // Local/offline demo mode state
+      const offline = { active:false, data:null, tick:null };
+      // UI helpers
+      function setUpdated(ts){ const el=document.getElementById('trkUpdated'); if(el){ el.textContent = ts? new Date(ts).toLocaleTimeString() : '—'; } }
+      function updateLinksFrom(center, cityName){
+        const g=document.getElementById('trkOpen'); const o=document.getElementById('trkOpenOSM'); const sv=document.getElementById('trkOpenSV');
+        const name = cityName || currentCity;
+        if(center){
+          const [lat,lng] = center; const clat=lat.toFixed(6), clng=lng.toFixed(6);
+          if(g){ g.href = `https://www.google.com/maps?q=${clat},${clng}`; g.removeAttribute('aria-disabled'); }
+          if(o){ o.href = `https://www.openstreetmap.org/?mlat=${clat}&mlon=${clng}#map=14/${clat}/${clng}`; o.removeAttribute('aria-disabled'); }
+          if(sv){ sv.href = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${clat},${clng}`; sv.removeAttribute('aria-disabled'); }
+        } else {
+          if(g){ g.href = name ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}` : 'https://www.google.com/maps'; g.removeAttribute('aria-disabled'); }
+          if(o){ o.href = name ? `https://www.openstreetmap.org/search?query=${encodeURIComponent(name)}` : 'https://www.openstreetmap.org/'; o.removeAttribute('aria-disabled'); }
+          if(sv){ sv.href = name ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}` : 'https://www.google.com/maps'; sv.removeAttribute('aria-disabled'); }
+        }
+        const t=document.getElementById('trkTitle'); if(t){ t.textContent = name || 'City'; }
+      }
+      function appendCity(url){ return currentCity ? `${url}?city=${encodeURIComponent(currentCity)}` : url; }
+      function computeCenter(list){ if(!list || !list.length) return null; let sl=0,sg=0; list.forEach(i=>{ sl+=parseFloat(i.lat)||0; sg+=parseFloat(i.lng)||0; }); return [sl/list.length, sg/list.length]; }
+      function applyData(data, fitBounds){
+        const list = document.getElementById('intersectionList');
+        list.innerHTML = '';
+        let green=0, amber=0, red=0;
+        window.__latestData = data;
+        data.forEach(int=>{
+          const popup = `<strong>${int.name}</strong><br/>Phase: ${int.phase}<br/>Countdown: ${int.remainingSeconds}s`;
+          const existing = markers.get(int.id);
+          if(existing){ existing.setStyle({color:colorForPhase(int.phase),fillColor:colorForPhase(int.phase)}).bindPopup(popup); }
+          else { const m=L.circleMarker([int.lat,int.lng],{radius:9,color:colorForPhase(int.phase),fillColor:colorForPhase(int.phase),fillOpacity:.85,weight:2}).addTo(map).bindPopup(popup); m.on('click',()=>window.showDetail(int.id)); markers.set(int.id,m);}            
+          const phaseClass = int.phase==='GREEN'?'phase-green':int.phase==='AMBER'?'phase-amber':'phase-red';
+          const row=document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.marginBottom='4px'; row.style.cursor='pointer';
+          row.innerHTML=`<span><span class='phase-dot ${phaseClass}'></span>${int.name}</span><span>${int.remainingSeconds}s</span>`; row.onclick=()=>window.showDetail(int.id); list.appendChild(row);
+          if(int.phase==='GREEN') green++; else if(int.phase==='AMBER') amber++; else red++;
+        });
+        document.getElementById('stat-total').textContent = data.length;
+        document.getElementById('stat-green').textContent = green;
+        document.getElementById('stat-amber').textContent = amber;
+        document.getElementById('stat-red').textContent = red;
+        document.getElementById('stat-refresh').textContent = new Date().toLocaleTimeString();
+        setUpdated(Date.now());
+        if(fitBounds){
+          const realMarkers = Array.from(markers.entries()).filter(([id])=>id!=='__notice').map(([,m])=>m);
+          if(realMarkers.length){ const group = L.featureGroup(realMarkers); map.fitBounds(group.getBounds().pad(0.2)); }
+          const ctr = computeCenter(data); updateLinksFrom(ctr, null);
+        }
+      }
+      // Local demo data generation
+      function hashString(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h>>>0); }
+      function seededRand(seed){ let t = seed + 0x6D2B79F5; return function(){ t|=0; t = t + 0x6D2B79F5 | 0; let r = Math.imul(t ^ t>>>15, 1|t); r = r + Math.imul(r ^ r>>>7, 61|r) ^ r; return ((r ^ r>>>14)>>>0) / 4294967296; }; }
+      function pickCenter(city){ if(city && CITY_COORDS[city]) return CITY_COORDS[city]; if(map){ const c = map.getCenter(); return [c.lat, c.lng]; } return [12.9716,77.5946]; }
+      function genLocal(city){ const [clat,clng] = pickCenter(city); const seed = hashString((city||'local')+'|tracking'); const rand = seededRand(seed); const phases=['GREEN','AMBER','RED']; const names=['Central','Market','Station','College','Airport','Park','River','Hill','Temple','Mall']; const ints=[]; const count=12; for(let i=0;i<count;i++){ const dlat=(rand()-0.5)*0.08; const dlng=(rand()-0.5)*0.08; const phase = phases[Math.floor(rand()*phases.length)]; const rem = phase==='RED'? (20+Math.floor(rand()*25)) : phase==='AMBER'? (4+Math.floor(rand()*3)) : (15+Math.floor(rand()*20)); ints.push({ id:`LINT${String(i+1).padStart(3,'0')}`, name:`${names[i%names.length]} Junction ${i+1}`, lat:+(clat+dlat).toFixed(6), lng:+(clng+dlng).toFixed(6), phase, remainingSeconds: rem }); } return ints; }
+      function startLocal(city){ if(offline.tick){ clearInterval(offline.tick); offline.tick=null; } offline.data = genLocal(city||currentCity); offline.active = true; const be=document.getElementById('stat-backend'); if(be){ be.textContent='Local'; be.className='pill pill-warn'; } const ml=document.getElementById('mapLoading'); if(ml){ ml.style.display='none'; } applyData(offline.data, true); offline.tick = setInterval(()=>{ if(!offline.data) return; offline.data.forEach(int=>{ int.remainingSeconds -= 1; if(int.remainingSeconds<=0){ if(int.phase==='GREEN'){ int.phase='AMBER'; int.remainingSeconds=5; } else if(int.phase==='AMBER'){ int.phase='RED'; int.remainingSeconds=30; } else if(int.phase==='RED'){ int.phase='GREEN'; int.remainingSeconds=25; } } }); applyData(offline.data, false); }, 1000); }
+      function stopLocal(){ if(offline.tick){ clearInterval(offline.tick); offline.tick=null; } offline.active=false; offline.data=null; }
+      // Suggestions and recent cities
+      function debounce(fn, wait){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); }; }
+      function loadRecent(){
+        try { const raw = localStorage.getItem(RECENT_KEY); const arr = raw? JSON.parse(raw):[]; if(Array.isArray(arr)) state.recent = arr.filter(Boolean).slice(0,5); }
+        catch(_){ state.recent = []; }
+      }
+      function saveRecent(){ try { localStorage.setItem(RECENT_KEY, JSON.stringify(state.recent.slice(0,5))); } catch(_){} }
+      function addRecent(city){ const c=(city||'').trim(); if(!c) return; state.recent = [c, ...state.recent.filter(x=>x.toLowerCase()!==c.toLowerCase())].slice(0,5); saveRecent(); }
+      function hideSuggestions(){ const el=document.getElementById('trkSuggest'); if(!el) return; el.hidden=true; el.innerHTML=''; state.suggestions=[]; state.activeIndex=-1; }
+      function renderSuggestions(list){ const el=document.getElementById('trkSuggest'); if(!el) return; if(!list||!list.length){ hideSuggestions(); return; } state.suggestions=list; state.activeIndex=-1; el.innerHTML=list.map((c,i)=>`<li role="option" data-index="${i}">${c}</li>`).join(''); el.hidden=false; Array.from(el.querySelectorAll('li')).forEach(li=>{ li.addEventListener('mousedown', (e)=>{ e.preventDefault(); const idx=parseInt(li.getAttribute('data-index'))||0; const city=state.suggestions[idx]; const si=document.getElementById('trkSearch'); if(si){ si.value=city; } hideSuggestions(); triggerSearch(city); }); }); }
+      async function fetchSuggestions(q){ const query=(q||'').trim(); if(query.length<2){ if(state.recent && state.recent.length){ renderSuggestions(state.recent); } else { hideSuggestions(); } return; } try { const r=await fetch(`http://localhost:4000/api/cities?query=${encodeURIComponent(query)}`); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length){ renderSuggestions(j.slice(0,10)); return; } } } catch(_){} const fallback = window.SANKETA_CITY_LIST && Array.isArray(window.SANKETA_CITY_LIST) ? window.SANKETA_CITY_LIST : ['Pune','Mumbai','Delhi','Bengaluru','Hyderabad','Chennai','Kolkata','Ahmedabad','Jaipur','Surat','Nagpur','Indore','Thane','Bhopal','Visakhapatnam','Patna','Vadodara','Ghaziabad','Ludhiana','Agra']; const lower=query.toLowerCase(); const filtered=fallback.filter(c=>c.toLowerCase().includes(lower)).slice(0,10); renderSuggestions(filtered); }
+      const debouncedSuggest = debounce(fetchSuggestions, 200);
+      function handleSuggestKey(e){ const el=document.getElementById('trkSuggest'); if(!el || el.hidden) return; if(e.key==='ArrowDown'){ e.preventDefault(); state.activeIndex = (state.activeIndex+1) % state.suggestions.length; } else if(e.key==='ArrowUp'){ e.preventDefault(); state.activeIndex = (state.activeIndex-1+state.suggestions.length) % state.suggestions.length; } else if(e.key==='Enter'){ if(state.activeIndex>=0){ e.preventDefault(); const city=state.suggestions[state.activeIndex]; const si=document.getElementById('trkSearch'); if(si){ si.value=city; } hideSuggestions(); triggerSearch(city); return; } } else if(e.key==='Escape'){ hideSuggestions(); return; } Array.from(el.querySelectorAll('li')).forEach((li,i)=>{ if(i===state.activeIndex) li.classList.add('active'); else li.classList.remove('active'); }); }
+      function triggerSearch(value){ const v=(value||'').trim(); if(!v) return; currentCity=v; addRecent(v); updateLinksFrom(null, currentCity); setUpdated(null); firstSuccess=false; if(__trkES){ try{__trkES.close();}catch(_){}} const list=document.getElementById('intersectionList'); if(list){ list.innerHTML='<div class="muted">Loading data…</div>'; } geocodeAndCenter(currentCity); pollRefresh(true); startSSE(); }
+      async function geocodeAndCenter(query){
+        const q=(query||'').trim(); if(!q) return;
+          // fallback center from known list if geocoding fails
+          const key = Object.keys(CITY_COORDS).find(k=> q.toLowerCase().includes(k.toLowerCase()));
+          if(key){ const [lat,lon]=CITY_COORDS[key]; if(map){ map.setView([lat,lon],12); } updateLinksFrom([lat,lon], q); return true; }
+        try{
+          const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`);
+          if(!r.ok) return;
+          const j = await r.json();
+          if(Array.isArray(j) && j.length){
+            const lat = parseFloat(j[0].lat), lon = parseFloat(j[0].lon);
+            if(!isNaN(lat) && !isNaN(lon)){
+              if(map){ map.setView([lat, lon], 12); }
+              updateLinksFrom([lat, lon], q);
+                return true;
+            }
+          }
+        }catch(_){ /* ignore geocode errors */ }
+      }
+      // Bind search controls with suggestions
+      const sBtn=document.getElementById('trkSearchBtn'); const sIn=document.getElementById('trkSearch'); const rBtn=document.getElementById('trkResetBtn');
+      loadRecent();
+      if(sBtn && sIn){ sBtn.addEventListener('click', ()=>{ triggerSearch(sIn.value); }); }
+      if(sIn){
+        sIn.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); triggerSearch(sIn.value); } else { handleSuggestKey(e); } });
+        sIn.addEventListener('input', ()=> debouncedSuggest(sIn.value));
+        sIn.addEventListener('focus', ()=>{ const v=(sIn.value||'').trim(); if(v.length<2){ if(state.recent && state.recent.length){ renderSuggestions(state.recent); } } });
+        sIn.addEventListener('blur', ()=> setTimeout(hideSuggestions, 120));
+      }
+      if(rBtn){ rBtn.addEventListener('click', ()=>{ currentCity=null; if(sIn) sIn.value=''; updateLinksFrom(null, null); setUpdated(null); firstSuccess=false; hideSuggestions(); if(__trkES){ try{__trkES.close();}catch(_){}} if(map){ map.setView([12.9716, 77.5946], 12); } pollRefresh(true); startSSE(); }); }
+      if(currentCity){ const t=document.getElementById('trkTitle'); if(t) t.textContent=currentCity; if(sIn) sIn.value=currentCity; updateLinksFrom(null, currentCity); geocodeAndCenter(currentCity); }
+      // In-map search control (uses the same triggerSearch flow)
+      (function(){
+        if(!(window.L && L.Control)) return;
+        const MapSearch = L.Control.extend({
+          onAdd: function(map){
+            const div = L.DomUtil.create('div','leaflet-bar');
+            div.style.background = '#fff';
+            div.style.padding = '4px';
+            div.style.borderRadius = '4px';
+            const input = document.createElement('input');
+            input.type='text'; input.placeholder='Search map';
+            input.style.width='140px'; input.style.border='none'; input.style.outline='none'; input.style.padding='4px';
+            const btn = document.createElement('button');
+            btn.type='button'; btn.textContent='Go';
+            btn.style.marginLeft='4px'; btn.style.padding='4px 6px'; btn.style.border='none'; btn.style.cursor='pointer';
+            div.appendChild(input); div.appendChild(btn);
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.on(btn,'click', function(){ const q=input.value.trim(); if(q) triggerSearch(q); });
+            L.DomEvent.on(input,'keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); const q=input.value.trim(); if(q) triggerSearch(q); } });
+            return div;
+          },
+          onRemove: function(map){}
+        });
+        L.control.mapSearch = function(opts){ return new MapSearch(opts); };
+        L.control.mapSearch({ position:'topleft' }).addTo(map);
+      })();
+      function renderDetail(int){
+        const panel = document.getElementById('intersectionDetail');
+        if(!int){ panel.classList.add('hidden'); panel.innerHTML=''; return; }
+        panel.classList.remove('hidden');
+        panel.innerHTML = `
+          <div class='detail-header'>
+            <h3>${int.name}</h3>
+            <button class='detail-close' type='button' onclick='window.hideDetail()'>Close</button>
+          </div>
+          <div class='detail-grid'>
+            <div class='cell'><strong>ID</strong><span>${int.id}</span></div>
+            <div class='cell'><strong>Phase</strong><span>${int.phase}</span></div>
+            <div class='cell'><strong>Countdown</strong><span>${int.remainingSeconds}s</span></div>
+            <div class='cell'><strong>Latitude</strong><span>${int.lat}</span></div>
+            <div class='cell'><strong>Longitude</strong><span>${int.lng}</span></div>
+            <div class='cell'><strong>Updated</strong><span>${new Date().toLocaleTimeString()}</span></div>
+          </div>`;
+      }
+      window.hideDetail = ()=>renderDetail(null);
+      window.showDetail = (id)=>{ const d = window.__latestData?.find(i=>i.id===id); if(d) renderDetail(d); };
+      function scheduleNext(){ setTimeout(pollRefresh, backoff); }
+      async function pollRefresh(forceNow=false){
+        try {
+          const r = await fetch(appendCity('http://localhost:4000/api/intersections'));
+          const j = await r.json(); if(!j.ok) { backoff = Math.min(backoff*2, maxBackoff); if(!forceNow) scheduleNext(); return; }
+          const data = j.intersections || j.data || [];
+          applyData(data, true);
+          const backendEl = document.getElementById('stat-backend');
+          backendEl.textContent = 'Online'; backendEl.className='pill pill-ok';
+          if(offline.active) stopLocal();
+          // success -> reset backoff
+          backoff = 1000;
+          if(!firstSuccess){
+            firstSuccess = true;
+            const loadingEl = document.getElementById('mapLoading');
+            if(loadingEl) loadingEl.style.display='none';
+          }
+        } catch(err){
+          if(!markers.get('__notice')) { document.getElementById('intersectionList').innerHTML='<div class="muted">Backend not running.</div>'; markers.set('__notice',true);} 
+          const backendEl = document.getElementById('stat-backend');
+          backendEl.textContent = 'Offline'; backendEl.className='pill pill-bad';
+          backoff = Math.min(backoff*2, maxBackoff);
+          // start local mode if not already
+          if(!offline.active){ startLocal(currentCity); }
+        }
+        if(!forceNow) scheduleNext();
+      }
+      // initial kickoff
+      pollRefresh(true);
+
+      // Attempt SSE connection
+      function startSSE(){
+        const connEl = document.getElementById('stat-conn');
+        try {
+          if(__trkES){ try{__trkES.close();}catch(_){}}
+          const es = new EventSource(appendCity('http://localhost:4000/api/stream'));
+          __trkES = es;
+          es.onopen = () => { connEl.textContent='SSE'; connEl.className='pill pill-ok'; if(offline.active) stopLocal(); };
+          es.addEventListener('update', (ev) => {
+            try {
+              const payload = JSON.parse(ev.data);
+              const data = payload.intersections;
+              applyData(data, false);
+              const backendEl = document.getElementById('stat-backend');
+              backendEl.textContent = 'Online'; backendEl.className='pill pill-ok';
+              if(!firstSuccess){
+                firstSuccess=true; const loadingEl=document.getElementById('mapLoading'); if(loadingEl) loadingEl.style.display='none';
+              }
+              // Fit bounds once on first SSE success
+              if(firstSuccess){
+                const realMarkers = Array.from(markers.entries()).filter(([id])=>id!=='__notice').map(([,m])=>m);
+                if(realMarkers.length){ const group=L.featureGroup(realMarkers); map.fitBounds(group.getBounds().pad(0.2)); }
+                const ctr = computeCenter(data); updateLinksFrom(ctr, null);
+              }
+            } catch(parseErr){ console.warn('SSE parse error', parseErr); }
+          });
+          es.onerror = () => {
+            connEl.textContent='Polling'; connEl.className='pill pill-warn';
+            es.close(); // fallback will continue via pollRefresh
+          };
+        } catch(e){ connEl.textContent='Polling'; connEl.className='pill pill-warn'; }
+      }
+      startSSE();
+    </script>
+    
+  </body>
+</html>

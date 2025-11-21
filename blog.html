@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blog — Sanketa</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <header id="site-header"></header>
+    <main class="section">
+      <div class="container">
+        <h1>Blog</h1>
+        <div id="blog-list" class="grid-3"></div>
+      </div>
+    </main>
+    <footer id="site-footer"></footer>
+    <script src="assets/js/main.js"></script>
+    <script>
+      renderLatestPosts({ targetId: 'blog-list', limit: 12, showContent: false });
+    </script>
+  </body>
+  </html>

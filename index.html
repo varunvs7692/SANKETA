@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sanketa — Home</title>
+    <meta name="description" content="Sanketa official website" />
+    <meta property="og:title" content="Sanketa" />
+    <meta property="og:description" content="Discover Sanketa — what we do and how we help." />
+    <meta property="og:type" content="website" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <header id="site-header"></header>
+
+    <main>
+      <section class="hero">
+        <div class="container">
+          <h1>Sanketa: Smarter Signals for a Smarter Bharat</h1>
+          <p>Adaptive AI traffic signals reducing delays, fuel waste, and urban pollution while improving safety and commuter confidence.</p>
+          <div class="actions">
+            <a class="btn primary" href="services.html">See Features</a>
+            <a class="btn" href="traffic.html">How It Works</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="features section">
+        <div class="container grid-3">
+          <div class="card">
+            <h3>Real-Time Adaptation</h3>
+            <p>AI models adjust green/red phases based on live vehicle density and flow.</p>
+          </div>
+          <div class="card">
+            <h3>Energy Independent</h3>
+            <p>Solar powered with battery backup ensures uptime during outages.</p>
+          </div>
+          <div class="card">
+            <h3>Offline Resilient</h3>
+            <p>Local controller continues optimized timing even when network drops.</p>
+          </div>
+          <div class="card">
+            <h3>Vehicle Classification</h3>
+            <p>Detects cars, trucks, two-wheelers, buses, & ambulances for priority.</p>
+          </div>
+          <div class="card">
+            <h3>Countdown API</h3>
+            <p>Digital signal timers exposed to public maps & navigation apps.</p>
+          </div>
+          <div class="card">
+            <h3>Cleaner & Safer</h3>
+            <p>Lower idle time cuts emissions; better predictability reduces risky driving.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section alt">
+        <div class="container two-col">
+          <div>
+            <h2>Measured Impact</h2>
+            <p>Typical adaptive deployment cuts intersection delay 15–30% and reduces emissions 5–15%, while emergency vehicle priority improves response times.</p>
+            <a class="btn" href="projects.html">Explore Impact</a>
+          </div>
+          <div class="showcase impact-visual" aria-label="Measured impact illustration">
+            <img class="impact-img" src="assets/img/impact.svg" alt="Graphic showing typical reductions in delay, emissions and improved emergency clearance" />
+          </div>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container mini-map-wrapper">
+          <h2>Live Demo (Sample)</h2>
+          <p class="muted">Below is a lightweight embedded map of sample intersections. Start backend on port 4000 to view live phase & countdown.</p>
+          <div class="location-bar" id="mini-map-bar" aria-label="Mini map location controls">
+            <div class="loc-left">
+              <strong>City:</strong>
+              <div class="loc-search" id="mini-search">
+                <input id="mini-city" type="text" placeholder="Search city" aria-label="Search city" autocomplete="off" />
+                <button class="btn small" id="mini-use-last" type="button" title="Use last city">Use Last</button>
+                <ul id="mini-suggest" class="loc-suggest hidden" role="listbox" aria-label="City suggestions"></ul>
+              </div>
+            </div>
+            <div class="loc-right loc-right-flex">
+              <span id="mini-city-status" class="loading" aria-live="polite" hidden><span class="spinner"></span>Searching…</span>
+              <button class="btn small" id="mini-clear" type="button" title="Clear input">Clear</button>
+            </div>
+          </div>
+          <div id="mini-map" aria-label="Mini live traffic map"></div>
+          <div id="mini-map-status" class="mini-map-status" hidden aria-live="polite">Offline demo data</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2>Why Now?</h2>
+          <div class="grid-3">
+            <div class="card"><h3>Congestion Crisis</h3><p>Fixed timers ignore stochastic flow, wasting time & fuel.</p></div>
+            <div class="card"><h3>Data Availability</h3><p>Affordable sensors & edge AI enable precise, local decisions.</p></div>
+            <div class="card"><h3>Public Transparency</h3><p>Live countdowns reduce driver stress & risky maneuvers.</p></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer id="site-footer"></footer>
+    <script src="assets/js/main.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-o9N1j7kGStbL1Q8g+Q7mP4bQnFnmptF6GU3H2Jf0z14=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o8R2jBkAuH2Xp0t+gC7vYQ+2QJwGgLrG6Hq9g2Z8S0A=" crossorigin=""></script>
+    <script>
+      (function initMiniMap(){
+        const el = document.getElementById('mini-map');
+        const statusEl = document.getElementById('mini-map-status');
+        if(!el) return;
+        if(typeof window.L === 'undefined'){
+          el.classList.add('map-fallback');
+          el.innerHTML = '<div class="map-error">Map library failed to load. Check connection or allow CDN assets.</div>';
+          if(statusEl){ statusEl.hidden=false; statusEl.textContent='Map unavailable'; }
+          return;
+        }
+        const map = L.map('mini-map',{ attributionControl:false }).setView([12.9716,77.5946],12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+        const markers = new Map();
+        function colorForPhase(p){return p==='GREEN'?'#31c754':p==='AMBER'?'#ffb347':'#ff4d4d';}
+        let localMode = false; let localData = []; let localTick = null;
+        // City search elements
+        const cityInput = document.getElementById('mini-city');
+        const suggestEl = document.getElementById('mini-suggest');
+        const useLastBtn = document.getElementById('mini-use-last');
+        const clearBtn = document.getElementById('mini-clear');
+        const cityStatus = document.getElementById('mini-city-status');
+        let lastCity = localStorage.getItem('mini_lastCity') || '';
+        const FALLBACK_CITIES = ['Bengaluru','Mumbai','Delhi','Chennai','Kolkata','Hyderabad','Pune','Ahmedabad','Jaipur','Surat'];
+        const CITY_COORDS = {
+          'Bengaluru':[12.9716,77.5946],'Mumbai':[19.0760,72.8777],'Delhi':[28.6139,77.2090],'Chennai':[13.0827,80.2707],
+          'Kolkata':[22.5726,88.3639],'Hyderabad':[17.3850,78.4867],'Pune':[18.5204,73.8567],'Ahmedabad':[23.0225,72.5714],
+          'Jaipur':[26.9124,75.7873],'Surat':[21.1702,72.8311]
+        };
+        let suggestItems = []; let activeIndex = -1; let suggestVisible = false; let debounceTimer = null;
+        function showSuggestions(){ suggestEl.classList.remove('hidden'); suggestVisible = true; }
+        function hideSuggestions(){ suggestEl.classList.add('hidden'); suggestVisible = false; activeIndex = -1; }
+        function renderSuggestions(list){
+          suggestEl.innerHTML = '';
+          list.forEach((c,i)=>{
+            const li=document.createElement('li');
+            li.textContent=c; li.role='option'; li.dataset.value=c;
+            li.addEventListener('mousedown',e=>{ e.preventDefault(); selectCity(c); });
+            suggestEl.appendChild(li);
+          });
+          if(list.length){ showSuggestions(); } else { hideSuggestions(); }
+        }
+        async function fetchSuggestions(q){
+          if(!q){ renderSuggestions([]); return; }
+          try {
+            const r = await fetch('http://localhost:4000/api/cities?query='+encodeURIComponent(q));
+            const j = await r.json();
+            if(j.ok && Array.isArray(j.cities)){ renderSuggestions(j.cities.slice(0,12)); return; }
+            throw new Error('bad');
+          } catch(e){
+            const lower = q.toLowerCase();
+            renderSuggestions(FALLBACK_CITIES.filter(c=>c.toLowerCase().includes(lower)).slice(0,10));
+          }
+        }
+        function updateActive(){
+          [...suggestEl.children].forEach((li,i)=>{ li.classList.toggle('active',i===activeIndex); });
+        }
+        function onKey(e){
+          if(!suggestVisible) return;
+          if(e.key==='ArrowDown'){ e.preventDefault(); activeIndex = (activeIndex+1)%suggestEl.children.length; updateActive(); }
+          else if(e.key==='ArrowUp'){ e.preventDefault(); activeIndex = (activeIndex-1+suggestEl.children.length)%suggestEl.children.length; updateActive(); }
+          else if(e.key==='Enter'){ if(activeIndex>=0){ const li=suggestEl.children[activeIndex]; selectCity(li.dataset.value); } }
+          else if(e.key==='Escape'){ hideSuggestions(); }
+        }
+        async function geocodeCity(name){
+          if(!name) return null;
+            // First attempt Nominatim
+          try {
+            const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(name);
+            const r = await fetch(url,{ headers:{'Accept':'application/json'} });
+            const j = await r.json();
+            if(Array.isArray(j) && j.length){ return [parseFloat(j[0].lat), parseFloat(j[0].lon)]; }
+            throw new Error('empty');
+          } catch(e){
+            if(CITY_COORDS[name]) return CITY_COORDS[name];
+            return null;
+          }
+        }
+        async function selectCity(name){
+          hideSuggestions(); cityInput.value = name; cityStatus.hidden=false; cityStatus.textContent='Locating…';
+          const coords = await geocodeCity(name);
+          if(coords){ map.setView(coords, 12); lastCity = name; localStorage.setItem('mini_lastCity', name); cityStatus.textContent='Centered on '+name; }
+          else { cityStatus.textContent='Not found'; }
+          setTimeout(()=>{ cityStatus.hidden=true; }, 1800);
+          // Regenerate local data if in local mode
+          if(localMode){ stopLocal(); startLocal(); }
+          else { refresh(); }
+        }
+        if(cityInput){
+          cityInput.addEventListener('input',()=>{
+            const q = cityInput.value.trim();
+            if(debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(()=> fetchSuggestions(q), 220);
+          });
+          cityInput.addEventListener('keydown',onKey);
+          cityInput.addEventListener('focus',()=>{ if(suggestEl.children.length) showSuggestions(); });
+          document.addEventListener('click',e=>{ if(!suggestEl.contains(e.target) && e.target!==cityInput) hideSuggestions(); });
+        }
+        if(useLastBtn){ useLastBtn.addEventListener('click',()=>{ if(lastCity){ selectCity(lastCity); } }); if(!lastCity) useLastBtn.disabled=true; }
+        if(clearBtn){ clearBtn.addEventListener('click',()=>{ cityInput.value=''; hideSuggestions(); cityInput.focus(); }); }
+        if(lastCity && cityInput){ cityInput.placeholder = 'Search city ('+lastCity+')'; }
+        function applyData(data){
+          data.forEach(int=>{
+            const html = `${int.name}<br/>${int.phase} • ${int.remainingSeconds}s`;
+            const existing = markers.get(int.id);
+            if(existing){ existing.setStyle({color:colorForPhase(int.phase),fillColor:colorForPhase(int.phase)}).bindPopup(html); }
+            else { const m=L.circleMarker([int.lat,int.lng],{radius:7,color:colorForPhase(int.phase),fillColor:colorForPhase(int.phase),fillOpacity:.85,weight:2}).addTo(map).bindPopup(html); markers.set(int.id,m); }
+          });
+        }
+        function hashString(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619);} return h>>>0; }
+        function seededRand(seed){ let t=seed+0x6D2B79F5; return function(){ t|=0; t=t+0x6D2B79F5|0; let r=Math.imul(t^t>>>15,1|t); r=r+Math.imul(r^r>>>7,61|r)^r; return ((r^r>>>14)>>>0)/4294967296; }; }
+        function genLocal(){ const c=map.getCenter(); const seed=hashString('mini|'+c.lat.toFixed(3)+','+c.lng.toFixed(3)); const rand=seededRand(seed); const phases=['GREEN','AMBER','RED']; const names=['Central','Market','Station','Park','Mall','Bridge','Temple','Hill']; const data=[]; for(let i=0;i<10;i++){ const dlat=(rand()-0.5)*0.08; const dlng=(rand()-0.5)*0.08; const phase=phases[Math.floor(rand()*phases.length)]; const rem=phase==='RED'?(20+Math.floor(rand()*25)):phase==='AMBER'?(4+Math.floor(rand()*3)):(15+Math.floor(rand()*20)); data.push({ id:'LM'+i, name:`${names[i%names.length]} ${i+1}`, lat:+(c.lat+dlat).toFixed(6), lng:+(c.lng+dlng).toFixed(6), phase, remainingSeconds: rem }); } return data; }
+        function startLocal(){ if(localTick){ clearInterval(localTick); } localData = genLocal(); localMode = true; if(statusEl){ statusEl.hidden=false; } applyData(localData); localTick = setInterval(()=>{ localData.forEach(int=>{ int.remainingSeconds -= 1; if(int.remainingSeconds<=0){ if(int.phase==='GREEN'){ int.phase='AMBER'; int.remainingSeconds=5; } else if(int.phase==='AMBER'){ int.phase='RED'; int.remainingSeconds=30; } else { int.phase='GREEN'; int.remainingSeconds=25; } } }); applyData(localData); },1000); }
+        function stopLocal(){ if(localTick){ clearInterval(localTick); localTick=null; } localMode=false; if(statusEl){ statusEl.hidden=true; } }
+        async function refresh(){
+          try {
+            const r = await fetch('http://localhost:4000/api/intersections');
+            const j = await r.json();
+            if(!j.ok) throw new Error('bad');
+            stopLocal();
+            const data = j.intersections || j.data || [];
+            applyData(data);
+          } catch(e){ if(!localMode){ startLocal(); } }
+        }
+        refresh(); setInterval(refresh,5000);
+      })();
+    </script>
+  </body>
+  </html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sanketa Dashboard</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    
+  </head>
+  <body>
+    <header id="site-header"></header>
+    <main class="section">
+      <div class="container">
+        <h1>Sanketa Dashboard</h1>
+        <p class="muted">Live system overview (simulated demo data).</p>
+        <div class="location-bar" aria-label="City location summary">
+          <div class="loc-left">
+            <strong id="locTitle">City Location</strong>
+            <span id="locLoading" class="loading" aria-live="polite" aria-hidden="true" hidden>
+              <span class="spinner" aria-hidden="true"></span>
+              <span class="loading-text">Loading…</span>
+            </span>
+            <div class="loc-search" role="search">
+              <input id="locSearch" type="text" placeholder="Search city" aria-label="Search city" />
+              <button id="locSearchBtn" class="btn small" type="button" aria-label="Search">Search</button>
+              <button id="locResetBtn" class="btn small" type="button" aria-label="Reset city">Reset</button>
+              <ul id="locSuggest" class="loc-suggest" role="listbox" aria-label="City suggestions" hidden></ul>
+            </div>
+          </div>
+          <div class="loc-right">
+            <a id="locOpen" class="btn small" target="_blank" rel="noopener" href="https://www.google.com/maps">Google Maps</a>
+            <a id="locOpenOSM" class="btn small" target="_blank" rel="noopener" href="https://www.openstreetmap.org/">OpenStreetMap</a>
+          </div>
+        </div>
+        
+        <div id="searchPrompt" class="panel" role="status">
+          <h3>Choose a city to begin</h3>
+          <p class="muted">Use the search box above to select a city. You can also open the default map providers with the buttons on the right.</p>
+        </div>
+
+        <div class="dashboard-grid" id="metricsSection" class="hidden">
+          <aside class="sidebar">
+            <h3>Navigation</h3>
+            <ul class="dash-nav">
+              <li><a href="dashboard.html">Overview</a></li>
+              <li><a href="tracking.html">Map Tracking</a></li>
+              <li><a href="traffic.html">Technology</a></li>
+              <li><a href="contact.html">Contact</a></li>
+              <li><a href="impact.html">Impact</a></li>
+            </ul>
+          </aside>
+          <div class="panel-group">
+            <div class="panel" id="panel-score">
+              <h3>Traffic Status</h3>
+              <div id="gauge" class="gauge"></div>
+              <div class="muted timestamp" id="trafficStatusNote">Average optimization level</div>
+            </div>
+            <div class="panel" id="panel-sensors">
+              <h3>System Health</h3>
+              <div class="space-y">
+                <div class="metric-block">
+                  <div class="metric-row">
+                    <span>Signal Status</span>
+                    <span class="badge ok" id="signalStatusText">Active</span>
+                  </div>
+                  <div class="meter"><div class="meter-bar green" id="signalBar"></div></div>
+                </div>
+                <div class="metric-block">
+                  <div class="metric-row">
+                    <span>Power Level</span>
+                    <span class="badge warn" id="powerLevelText">--%</span>
+                  </div>
+                  <div class="meter"><div class="meter-bar primary" id="powerBar"></div></div>
+                </div>
+                <div class="metric-block">
+                  <div class="metric-row">
+                    <span>Response Time</span>
+                    <span class="badge ok" id="respTimeText">Good</span>
+                  </div>
+                  <div class="meter"><div class="meter-bar blue" id="respBar"></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel" id="panel-traffic">
+              <h3>Traffic Corridors</h3>
+              <ul class="traffic-list" id="trafficList"></ul>
+            </div>
+            <div class="panel" id="panel-alerts">
+              <h3>Active Alerts</h3>
+              <ul class="status-list" id="alertList"></ul>
+            </div>
+            <div class="panel" id="panel-reports">
+              <h3>Recent Reports</h3>
+              <ul class="reports" id="reportList"></ul>
+            </div>
+            <div class="panel" id="panel-keymetrics">
+              <h3>Key Metrics</h3>
+              <div class="metrics">
+                <div class="metric-line"><span class="metric-value" id="kmWait">--</span><span class="metric-label">Avg. Wait Time</span></div>
+                <div class="metric-line"><span class="metric-value" id="kmEmission">--</span><span class="metric-label">Emission Reduction</span></div>
+                <div class="metric-line"><span class="metric-value" id="kmVehicles">--</span><span class="metric-label">Vehicles Processed</span></div>
+              </div>
+            </div>
+            <div class="panel" id="panel-energy" aria-label="Energy and Uptime panel">
+              <h3>Uptime & Energy</h3>
+              <ul class="metric-list" id="energyList"></ul>
+            </div>
+            <div class="panel" id="panel-environment" aria-label="Environmental savings panel">
+              <h3>Environmental Savings</h3>
+              <div class="env-grid">
+                <div class="env-item"><div class="env-label">CO₂ Avoided</div><div class="env-value" id="co2Saved">-- kg</div></div>
+                <div class="env-item"><div class="env-label">Fuel Saved</div><div class="env-value" id="fuelSaved">-- L</div></div>
+                <div class="env-item"><div class="env-label">Idle Reduced</div><div class="env-value" id="idleReduced">-- %</div></div>
+              </div>
+            </div>
+            <div class="panel" id="panel-emergency" aria-label="Emergency priority panel">
+              <h3>Emergency Priority</h3>
+              <ul class="metric-list" id="emergencyList"></ul>
+            </div>
+            <div class="panel" id="panel-efficiency" aria-label="Signal efficiency panel">
+              <h3>Cycle Efficiency</h3>
+              <ul class="metric-list" id="efficiencyList"></ul>
+            </div>
+            <div class="panel" id="panel-congestion" aria-label="Congestion hotspots panel">
+              <h3>Congestion Hotspots</h3>
+              <ul class="metric-list" id="congestionList"></ul>
+            </div>
+            <div class="panel" id="panel-location" aria-label="City location summary panel">
+              <h3>City Location</h3>
+              <ul class="metric-list" id="locationList"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer id="site-footer"></footer>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+    

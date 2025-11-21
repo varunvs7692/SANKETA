@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contact — Sanketa</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <header id="site-header"></header>
+    <main class="section">
+      <div class="container narrow">
+        <h1>Contact Us</h1>
+        <p class="muted">Share basic details to explore deploying Sanketa adaptive traffic signals.</p>
+        <form data-contact name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" data-api>
+          <input type="hidden" name="form-name" value="contact" />
+          <p hidden>
+            <label>Don’t fill this out if you're human: <input name="bot-field" /></label>
+          </p>
+          <div class="row">
+            <div>
+              <label for="name">Name</label>
+              <input id="name" name="name" autocomplete="name" required />
+            </div>
+            <div>
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" autocomplete="email" required />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label for="subject">Subject</label>
+              <input id="subject" name="subject" placeholder="e.g. Pilot Deployment" />
+            </div>
+            <div>
+              <label for="city">City / Region</label>
+              <input id="city" name="city" placeholder="e.g. Pune" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label for="scope">Approx Intersections</label>
+              <input id="scope" name="scope" placeholder="e.g. 10" />
+            </div>
+            <div>
+              <label for="priority">Priority Needs</label>
+              <input id="priority" name="priority" placeholder="e.g. Ambulance, School Zone" />
+            </div>
+          </div>
+          <label for="message">Message</label>
+          <textarea id="message" name="message" required placeholder="Describe congestion pain points & objectives (delay %, emissions, emergency response)"></textarea>
+          <div class="mt-16">
+            <button class="btn primary" type="submit">Send</button>
+            <button class="btn api-btn" type="button" id="apiSend">Send via API</button>
+            <span class="error" data-error></span>
+          </div>
+        </form>
+        <p class="muted mt-16">Prefer email? <a href="mailto:info@example.com">info@example.com</a></p>
+      </div>
+    </main>
+    <footer id="site-footer"></footer>
+    <script src="assets/js/main.js"></script>
+    <script>
+      // Optional API submission button; falls back to mailto if backend absent.
+      const apiBtn = document.getElementById('apiSend');
+      apiBtn?.addEventListener('click', async () => {
+        const form = document.querySelector('form[data-api]');
+        if (!form) return;
+        const data = new FormData(form);
+        const payload = Object.fromEntries(data.entries());
+        const errorEl = form.querySelector('[data-error]');
+        if (errorEl) errorEl.textContent = '';
+        if (!payload.name || !payload.email || !payload.message) {
+          if (errorEl) errorEl.textContent = 'Please fill in required fields.';
+          return;
+        }
+        try {
+          const res = await fetch('http://localhost:4000/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (json.ok) {
+            alert('Message submitted (mail: ' + json.mail + ').');
+            form.reset();
+          } else {
+            errorEl && (errorEl.textContent = json.error || 'Submission failed');
+          }
+        } catch (e) {
+          errorEl && (errorEl.textContent = 'API unreachable');
+        }
+      });
+    </script>
+  </body>
+  </html>

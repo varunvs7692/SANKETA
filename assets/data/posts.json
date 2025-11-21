@@ -1,0 +1,23 @@
+[
+  {
+    "id": "welcome",
+    "title": "Welcome to Sanketa",
+    "date": "2025-11-01",
+    "excerpt": "A quick hello and what to expect from our blog.",
+    "content": "We’ll share delivery notes, engineering deep-dives, and product stories."
+  },
+  {
+    "id": "delivery-principles",
+    "title": "Delivery Principles",
+    "date": "2025-11-05",
+    "excerpt": "How we ship quickly without compromising quality.",
+    "content": "Outcome focus, small batches, automation, observability, and feedback loops."
+  },
+  {
+    "id": "platform-tooling",
+    "title": "Platform & Tooling",
+    "date": "2025-11-12",
+    "excerpt": "Our default stack and why it works.",
+    "content": "TypeScript, React, Node, Python, IaC, and CI/CD as table stakes."
+  }
+]

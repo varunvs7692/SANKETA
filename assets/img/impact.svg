@@ -1,0 +1,31 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='800' height='480' viewBox='0 0 800 480'>
+  <defs>
+    <linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0%' stop-color='#4f8cff'/>
+      <stop offset='100%' stop-color='#7c4dff'/>
+    </linearGradient>
+  </defs>
+  <rect x='0' y='0' width='800' height='480' fill='#121318'/>
+  <rect x='16' y='16' width='768' height='448' rx='20' fill='url(#bg)' opacity='0.18'/>
+  <g font-family='Segoe UI, Arial, sans-serif' fill='#e6e7eb'>
+    <text x='40' y='80' font-size='34' font-weight='600'>Measured Impact</text>
+    <text x='40' y='130' font-size='18' fill='#d0d2d8'>Adaptive Signals (Typical)</text>
+    <g font-size='16'>
+      <text x='60' y='190'>• Delay Reduction: 15–30%</text>
+      <text x='60' y='220'>• Emission Reduction: 5–15%</text>
+      <text x='60' y='250'>• Emergency Clearance Faster</text>
+    </g>
+    <g transform='translate(430,120)'>
+      <rect x='0' y='0' width='320' height='220' rx='16' fill='#171822' stroke='#222436'/>
+      <text x='20' y='42' font-size='20' font-weight='600'>Illustrative Gains</text>
+      <g stroke-width='10' stroke-linecap='round'>
+        <line x1='40' y1='110' x2='40' y2='180' stroke='#ffb347'/>
+        <line x1='100' y1='140' x2='100' y2='180' stroke='#ff4d4d'/>
+        <line x1='160' y1='90' x2='160' y2='180' stroke='#31c754'/>
+        <line x1='220' y1='70' x2='220' y2='180' stroke='#4f8cff'/>
+        <line x1='280' y1='60' x2='280' y2='180' stroke='#7c4dff'/>
+      </g>
+      <text x='20' y='200' font-size='12' fill='#a6a8b1'>Bars: composite improvements (lower delay, better flow)</text>
+    </g>
+  </g>
+</svg>
