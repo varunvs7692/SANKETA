@@ -537,9 +537,54 @@
   }
   if(sr){ sr.addEventListener('click', resetCity); }
 
+  // Historical Maps
+  let historicalMap = null;
+  let historicalMarkers = new Map();
+  function initHistoricalMap(){
+    const el = document.getElementById('historical-map');
+    if(!el || historicalMap) return;
+    if(typeof window.L === 'undefined'){ el.innerHTML = '<div class="map-error">Map library failed to load.</div>'; return; }
+    historicalMap = L.map('historical-map').setView([12.9716,77.5946],12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(historicalMap);
+  }
+  function updateHistoricalMap(monthOffset){
+    if(!historicalMap || !state.currentCity) return;
+    historicalMarkers.forEach(m => historicalMap.removeLayer(m));
+    historicalMarkers.clear();
+    const data = genHistoricalData(state.currentCity, monthOffset);
+    data.forEach(int=>{
+      const color = int.phase==='GREEN'?'#31c754':int.phase==='AMBER'?'#ffb347':'#ff4d4d';
+      const m = L.circleMarker([int.lat,int.lng],{radius:7,color,fillColor:color,fillOpacity:.85,weight:2}).addTo(historicalMap);
+      m.bindPopup(`${int.name}<br/>${int.phase} • ${int.remainingSeconds}s`);
+      historicalMarkers.set(int.id, m);
+    });
+  }
+  function genHistoricalData(city, monthOffset){
+    const [clat, clng] = pickCenterForCity(city);
+    const seed = hashString((city||'default') + '|historical|' + monthOffset);
+    const rand = seededRand(seed);
+    const count = 12;
+    const phases = ['GREEN','AMBER','RED'];
+    const names = ['Central','Market','Station','College','Airport','Park','River','Hill','Temple','Mall'];
+    const ints = [];
+    for(let i=0;i<count;i++){
+      const dlat = (rand()-0.5)*0.08;
+      const dlng = (rand()-0.5)*0.08;
+      const phase = phases[Math.floor(rand()*phases.length)];
+      const rem = phase==='RED'? (20+Math.floor(rand()*25)) : phase==='AMBER'? (4+Math.floor(rand()*3)) : (15+Math.floor(rand()*20));
+      ints.push({ id: `HINT${String(i+1).padStart(3,'0')}`, name: `${names[i%names.length]} Junction ${i+1}`, lat: +(clat+dlat).toFixed(6), lng: +(clng+dlng).toFixed(6), phase, remainingSeconds: rem });
+    }
+    return ints;
+  }
+  // Bind historical buttons
+  document.getElementById('month-1').addEventListener('click', () => updateHistoricalMap(1));
+  document.getElementById('month-2').addEventListener('click', () => updateHistoricalMap(2));
+  document.getElementById('month-3').addEventListener('click', () => updateHistoricalMap(3));
+
   // Kickoff
   loadRecent();
   toggleMetrics(false);
+  initHistoricalMap();
   if(NO_API){ /* hold until city selected */ }
   poll();
   setInterval(poll, 5000);

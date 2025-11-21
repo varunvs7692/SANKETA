@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sanketa Dashboard</title>
     <link rel="stylesheet" href="assets/css/style.css" />
-    
+    <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css" />
   </head>
   <body>
     <header id="site-header"></header>
@@ -129,6 +129,15 @@
               <h3>City Location</h3>
               <ul class="metric-list" id="locationList"></ul>
             </div>
+            <div class="panel" id="panel-historical-maps" aria-label="Historical traffic maps panel">
+              <h3>Historical Traffic Maps</h3>
+              <div class="historical-controls">
+                <button id="month-1" class="btn small">Last Month</button>
+                <button id="month-2" class="btn small">2 Months Ago</button>
+                <button id="month-3" class="btn small">3 Months Ago</button>
+              </div>
+              <div id="historical-map" style="height: 300px;"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -136,5 +145,7 @@
     <footer id="site-footer"></footer>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/main.js"></script>
+    <script src="node_modules/leaflet/dist/leaflet.js"></script>
     <script src="assets/js/dashboard.js"></script>
+
     
