@@ -9,6 +9,8 @@
     <meta property="og:description" content="Discover Sanketa — what we do and how we help." />
     <meta property="og:type" content="website" />
     <link rel="stylesheet" href="assets/css/style.css" />
+    <!-- Local Leaflet assets (replaces CDN to avoid load failures) -->
+    <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css" />
     <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
@@ -105,8 +107,7 @@
 
     <footer id="site-footer"></footer>
     <script src="assets/js/main.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-o9N1j7kGStbL1Q8g+Q7mP4bQnFnmptF6GU3H2Jf0z14=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o8R2jBkAuH2Xp0t+gC7vYQ+2QJwGgLrG6Hq9g2Z8S0A=" crossorigin=""></script>
+    <script src="node_modules/leaflet/dist/leaflet.js"></script>
     <script>
       (function initMiniMap(){
         const el = document.getElementById('mini-map');
