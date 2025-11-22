@@ -76,20 +76,19 @@
           <div class="location-bar" id="mini-map-bar" aria-label="Mini map location controls">
             <div class="loc-left">
               <strong>City:</strong>
-              <div class="l
-              oc-search" id="mini-search">
+              <div class="loc-search" id="mini-search">
                 <input id="mini-city" type="text" placeholder="Search city" aria-label="Search city" autocomplete="off" />
                 <button class="btn small" id="mini-use-last" type="button" title="Use last city">Use Last</button>
+                <button class="btn small" id="mini-clear" type="button" title="Clear input">Clear</button>
                 <ul id="mini-suggest" class="loc-suggest hidden" role="listbox" aria-label="City suggestions"></ul>
               </div>
             </div>
             <div class="loc-right loc-right-flex">
               <span id="mini-city-status" class="loading" aria-live="polite" hidden><span class="spinner"></span>Searching…</span>
-              <button class="btn small" id="mini-clear" type="button" title="Clear input">Clear</button>
             </div>
           </div>
           <div id="mini-map" aria-label="Mini live traffic map"></div>
-          <div id="mini-map-status" class="mini-map-status" hidden aria-live="polite">Offline demo data</div>
+          <div id="mini-results" class="mini-results-block" aria-label="Location search results"></div>
         </div>
       </section>
 
@@ -121,6 +120,13 @@
         }
         const map = L.map('mini-map',{ attributionControl:false }).setView([12.9716,77.5946],12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+        // Add Mapbox traffic tile overlay
+        var mapboxAccessToken = 'YOUR_MAPBOX_ACCESS_TOKEN'; // TODO: Replace with your actual token
+        var trafficLayer = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/traffic-day-v2/tiles/256/{z}/{x}/{y}?access_token=' + mapboxAccessToken, {
+          maxZoom: 19,
+          attribution: '© Mapbox Traffic'
+        });
+        trafficLayer.addTo(map);
         const markers = new Map();
         function colorForPhase(p){return p==='GREEN'?'#31c754':p==='AMBER'?'#ffb347':'#ff4d4d';}
         let localMode = false; let localData = []; let localTick = null;
@@ -151,15 +157,39 @@
           if(list.length){ showSuggestions(); } else { hideSuggestions(); }
         }
         async function fetchSuggestions(q){
-          if(!q){ renderSuggestions([]); return; }
+          const resultsEl = document.getElementById('mini-results');
+          if(!q){ renderSuggestions([]); if(resultsEl) resultsEl.textContent = ''; return; }
+          // Try ML ranking endpoint first
           try {
-            const r = await fetch('http://localhost:4000/api/cities?query='+encodeURIComponent(q));
+            const r = await fetch('http://localhost:4000/api/city-rank?query='+encodeURIComponent(q));
             const j = await r.json();
-            if(j.ok && Array.isArray(j.cities)){ renderSuggestions(j.cities.slice(0,12)); return; }
+            if(j.ok && Array.isArray(j.cities)){
+              const names = j.cities.map(c=>c.name);
+              renderSuggestions(names.slice(0,12));
+              if(resultsEl) resultsEl.innerHTML = j.cities.length ? `<strong>Ranked:</strong><br>${j.cities.map(c=>`
+                <div class='pill' style='margin-bottom:6px;' title='Score: ${c.score}'>
+                  <strong>${c.name}</strong><br>
+                  <span style='opacity:.8;font-size:13px;'>Congestion: ${c.congestion}% | Travel: ${c.travel} min | Score: ${c.score}</span>
+                </div>`).join('')}` : '<span class="muted">No results found.</span>';
+              return;
+            }
             throw new Error('bad');
           } catch(e){
-            const lower = q.toLowerCase();
-            renderSuggestions(FALLBACK_CITIES.filter(c=>c.toLowerCase().includes(lower)).slice(0,10));
+            // Fallback to legacy API
+            try {
+              const r = await fetch('http://localhost:4000/api/cities?query='+encodeURIComponent(q));
+              const j = await r.json();
+              if(Array.isArray(j)){
+                renderSuggestions(j.slice(0,12));
+                if(resultsEl) resultsEl.innerHTML = j.length ? `<strong>Fallback:</strong> ${j.map(c=>`<span class='pill'>${c}</span>`).join(' ')}` : '<span class="muted">No results found.</span>';
+                return;
+              }
+            } catch(e2){
+              const lower = q.toLowerCase();
+              const fallback = FALLBACK_CITIES.filter(c=>c.toLowerCase().includes(lower)).slice(0,10);
+              renderSuggestions(fallback);
+              if(resultsEl) resultsEl.innerHTML = fallback.length ? `<strong>Local:</strong> ${fallback.map(c=>`<span class='pill'>${c}</span>`).join(' ')}` : '<span class="muted">No results found.</span>';
+            }
           }
         }
         function updateActive(){
@@ -188,6 +218,8 @@
         }
         async function selectCity(name){
           hideSuggestions(); cityInput.value = name; cityStatus.hidden=false; cityStatus.textContent='Locating…';
+          const resultsEl = document.getElementById('mini-results');
+          if(resultsEl) resultsEl.innerHTML = `<span class='pill'>${name}</span> selected.`;
           const coords = await geocodeCity(name);
           if(coords){ map.setView(coords, 12); lastCity = name; localStorage.setItem('mini_lastCity', name); cityStatus.textContent='Centered on '+name; }
           else { cityStatus.textContent='Not found'; }

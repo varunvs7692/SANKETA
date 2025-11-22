@@ -124,6 +124,49 @@ setInterval(() => {
 }, 1000);
 
 // City suggestions (autocomplete)
+// ML-based city ranking stub
+// TomTom global traffic ranking dataset (sample)
+const TOMTOM_CITIES = [
+  { name: 'Kolkata, India', congestion: 32, travel: 34.55 },
+  { name: 'Bengaluru, India', congestion: 38, travel: 34.17 },
+  { name: 'Pune, India', congestion: 34, travel: 33.37 },
+  { name: 'London, United Kingdom', congestion: 32, travel: 33.28 },
+  { name: 'Kyoto, Japan', congestion: 39, travel: 33.27 },
+  { name: 'Lima, Peru', congestion: 47, travel: 33.20 },
+  { name: 'Hyderabad, India', congestion: 28, travel: 31.50 },
+  { name: 'Chennai, India', congestion: 29, travel: 30.33 },
+  { name: 'Mumbai, India', congestion: 35, travel: 29.43 },
+  { name: 'Ahmedabad, India', congestion: 23, travel: 29.05 },
+  { name: 'New York, NY, USA', congestion: 30, travel: 31.10 },
+  { name: 'Paris, France', congestion: 30, travel: 28.88 },
+  { name: 'Tokyo, Japan', congestion: 30, travel: 27.25 },
+  { name: 'Berlin, Germany', congestion: 29, travel: 28.52 },
+  { name: 'Toronto, Canada', congestion: 31, travel: 25.22 },
+  { name: 'New Delhi, India', congestion: 33, travel: 23.40 },
+  { name: 'San Francisco, CA, USA', congestion: 32, travel: 26.53 },
+  { name: 'Sydney, Australia', congestion: 28, travel: 23.52 },
+  { name: 'Singapore, Singapore', congestion: 29, travel: 20.27 },
+  { name: 'Los Angeles, CA, USA', congestion: 43, travel: 16.45 }
+];
+
+app.get('/api/city-rank', async (req, res) => {
+  const q = String(req.query.query||'').trim().toLowerCase();
+  if(!q) return res.json({ ok: true, cities: [] });
+  // Filter and rank by both congestion and travel time
+  let filtered = TOMTOM_CITIES.filter(c => c.name.toLowerCase().includes(q));
+  if (!filtered.length) {
+    // Fallback: show top cities
+    filtered = TOMTOM_CITIES.slice(0, 10);
+  }
+  // Score: weighted sum (congestion*2 + travel)
+  const ranked = filtered.map(c => ({
+    name: c.name,
+    congestion: c.congestion,
+    travel: c.travel,
+    score: Math.round(c.congestion * 2 + c.travel)
+  })).sort((a, b) => b.score - a.score);
+  return res.json({ ok: true, cities: ranked });
+});
 app.get('/api/cities', async (req, res) => {
   const q = String(req.query.query||'').trim();
   if(!q) return res.json([]);

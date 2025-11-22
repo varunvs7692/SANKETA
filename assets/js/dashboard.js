@@ -1,5 +1,69 @@
 // Dashboard data population script (no maps)
 (function(){
+    // Country list (demo: add more as needed)
+    const COUNTRY_LIST = [
+      { code: 'IN', name: 'India' },
+      { code: 'US', name: 'United States' },
+      { code: 'GB', name: 'United Kingdom' },
+      { code: 'CA', name: 'Canada' },
+      { code: 'AU', name: 'Australia' }
+      // Add more countries as needed
+    ];
+
+    // Demo: map cities to countries (extend as needed)
+    const CITY_COUNTRY = {
+      'Pune': 'IN', 'Mumbai': 'IN', 'Delhi': 'IN', 'Bengaluru': 'IN', 'Hyderabad': 'IN', 'Chennai': 'IN', 'Kolkata': 'IN', 'Ahmedabad': 'IN', 'Jaipur': 'IN', 'Surat': 'IN', 'Nagpur': 'IN', 'Indore': 'IN', 'Thane': 'IN', 'Bhopal': 'IN', 'Visakhapatnam': 'IN', 'Patna': 'IN', 'Vadodara': 'IN', 'Ghaziabad': 'IN', 'Ludhiana': 'IN', 'Agra': 'IN',
+      'Kanpur': 'IN', 'Lucknow': 'IN', 'Meerut': 'IN', 'Rajkot': 'IN', 'Varanasi': 'IN', 'Srinagar': 'IN', 'Aurangabad': 'IN', 'Dhanbad': 'IN', 'Amritsar': 'IN', 'Nashik': 'IN', 'Faridabad': 'IN', 'Allahabad': 'IN', 'Ranchi': 'IN', 'Howrah': 'IN', 'Coimbatore': 'IN', 'Jabalpur': 'IN', 'Gwalior': 'IN', 'Vijayawada': 'IN', 'Jodhpur': 'IN', 'Madurai': 'IN', 'Raipur': 'IN', 'Kota': 'IN', 'Guwahati': 'IN', 'Chandigarh': 'IN', 'Solapur': 'IN', 'Hubli': 'IN', 'Mysore': 'IN', 'Tiruchirappalli': 'IN', 'Bareilly': 'IN', 'Aligarh': 'IN', 'Moradabad': 'IN', 'Gurgaon': 'IN', 'Jalandhar': 'IN', 'Bhubaneswar': 'IN', 'Salem': 'IN', 'Warangal': 'IN', 'Guntur': 'IN', 'Bhiwandi': 'IN', 'Saharanpur': 'IN', 'Gorakhpur': 'IN', 'Bikaner': 'IN', 'Amravati': 'IN', 'Noida': 'IN', 'Jamshedpur': 'IN', 'Bhilai': 'IN', 'Cuttack': 'IN', 'Firozabad': 'IN', 'Kochi': 'IN', 'Nellore': 'IN', 'Bhavnagar': 'IN', 'Dehradun': 'IN', 'Durgapur': 'IN', 'Asansol': 'IN', 'Rourkela': 'IN', 'Nanded': 'IN', 'Kolhapur': 'IN', 'Ajmer': 'IN', 'Akola': 'IN', 'Gulbarga': 'IN', 'Jamnagar': 'IN', 'Ujjain': 'IN', 'Loni': 'IN', 'Siliguri': 'IN', 'Jhansi': 'IN', 'Ulhasnagar': 'IN', 'Jammu': 'IN', 'Sangli': 'IN', 'Mangalore': 'IN', 'Erode': 'IN', 'Belgaum': 'IN', 'Kurnool': 'IN', 'Ambattur': 'IN', 'Tirupati': 'IN', 'Malegaon': 'IN', 'Gaya': 'IN', 'Jalgaon': 'IN', 'Udaipur': 'IN', 'Maheshtala': 'IN', 'Davanagere': 'IN', 'Kozhikode': 'IN', 'Kurnool': 'IN', 'Bokaro': 'IN', 'South Dumdum': 'IN', 'Bellary': 'IN', 'Patiala': 'IN', 'Gopalpur': 'IN', 'Agartala': 'IN', 'Bhagalpur': 'IN', 'Muzaffarnagar': 'IN', 'Bhatpara': 'IN', 'Panihati': 'IN', 'Latur': 'IN', 'Dhule': 'IN', 'Rohtak': 'IN', 'Korba': 'IN', 'Bhilwara': 'IN', 'Brahmapur': 'IN', 'Muzaffarpur': 'IN', 'Ahmednagar': 'IN', 'Mathura': 'IN', 'Kollam': 'IN', 'Avadi': 'IN', 'Kadapa': 'IN', 'Anantapur': 'IN', 'Kamarhati': 'IN', 'Bilaspur': 'IN', 'Shahjahanpur': 'IN', 'Satara': 'IN', 'Bijapur': 'IN', 'Rampur': 'IN', 'Shivamogga': 'IN', 'Chhindwara': 'IN', 'Tumkur': 'IN', 'Bidhan Nagar': 'IN', 'Puducherry': 'IN', 'Haridwar': 'IN', 'Morena': 'IN', 'Gandhinagar': 'IN', 'Bhiwani': 'IN', 'Secunderabad': 'IN', 'Karnal': 'IN', 'Bathinda': 'IN', 'Panipat': 'IN', 'Darbhanga': 'IN', 'Bongaigaon': 'IN', 'Sikar': 'IN', 'Krishnanagar': 'IN', 'Bardhaman': 'IN', 'Kulti': 'IN', 'Kharagpur': 'IN', 'Dindigul': 'IN', 'Gandhidham': 'IN', 'Haldia': 'IN', 'Nandyal': 'IN', 'Balurghat': 'IN', 'Madhyamgram': 'IN', 'Bhiwadi': 'IN', 'Baranagar': 'IN', 'Ambarnath': 'IN', 'Bhusawal': 'IN', 'Ozhukarai': 'IN', 'Bettiah': 'IN', 'Kishanganj': 'IN', 'Sasaram': 'IN', 'Hazaribagh': 'IN', 'Palghar': 'IN', 'Karaikudi': 'IN', 'Kishangarh': 'IN', 'Chittoor': 'IN', 'North Dumdum': 'IN', 'Bongaigaon': 'IN', 'Bongaigaon': 'IN',
+      'New York': 'US', 'Los Angeles': 'US', 'Chicago': 'US',
+      'London': 'GB', 'Manchester': 'GB',
+      'Toronto': 'CA', 'Vancouver': 'CA',
+      'Sydney': 'AU', 'Melbourne': 'AU'
+    };
+
+    // Populate country dropdown
+    function populateCountryDropdown() {
+      const select = document.getElementById('countrySelect');
+      if (!select) return;
+      select.innerHTML = COUNTRY_LIST.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
+      select.value = 'IN'; // Default to India
+    }
+
+    // Filter cities by selected country
+    function getCitiesForCountry(countryCode) {
+      return Object.keys(CITY_COUNTRY).filter(city => CITY_COUNTRY[city] === countryCode);
+    }
+
+    // Update city suggestions when country changes
+    function updateCitySuggestions() {
+      const select = document.getElementById('countrySelect');
+      const cityInput = document.getElementById('locSearch');
+      const suggestEl = document.getElementById('locSuggest');
+      if (!select || !cityInput || !suggestEl) return;
+      const cities = getCitiesForCountry(select.value);
+      suggestEl.innerHTML = cities.map(city => `<li role="option" data-value="${city}">${city}</li>`).join('');
+      suggestEl.hidden = false;
+    }
+
+    // Event: country dropdown change
+    function bindCountryDropdown() {
+      const select = document.getElementById('countrySelect');
+      if (!select) return;
+      select.addEventListener('change', updateCitySuggestions);
+    }
+
+    // Event: city input focus (show suggestions)
+    function bindCityInput() {
+      const cityInput = document.getElementById('locSearch');
+      if (!cityInput) return;
+      cityInput.addEventListener('focus', updateCitySuggestions);
+    }
+
+    // Initialize dropdown and events on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+      populateCountryDropdown();
+      bindCountryDropdown();
+      bindCityInput();
+    });
   const CFG = window.SANKETA || {};
   const NO_API = !!CFG.NO_API; // enable pure frontend mode when true
   const CITY_COORDS = (window.SANKETA_CITY_COORDS) || {
@@ -529,8 +593,45 @@
   const si = document.getElementById('locSearch');
   const sr = document.getElementById('locResetBtn');
   if(sb && si){
-    sb.addEventListener('click', ()=> setCity(si.value));
-    si.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); setCity(si.value); } else { handleSuggestKey(e); } });
+    // Helper: show error message
+    function showCityError(msg) {
+      let errEl = document.getElementById('cityErrorMsg');
+      if (!errEl) {
+        errEl = document.createElement('div');
+        errEl.id = 'cityErrorMsg';
+        errEl.className = 'city-error-msg';
+        si.parentNode.insertBefore(errEl, si.nextSibling);
+      }
+      errEl.textContent = msg;
+      errEl.style.display = 'block';
+      setTimeout(() => { errEl.style.display = 'none'; }, 3500);
+    }
+
+    function validateCityInput(city) {
+      const select = document.getElementById('countrySelect');
+      const cities = select ? Object.keys(CITY_COUNTRY).filter(c => CITY_COUNTRY[c] === select.value) : [];
+      return cities.includes(city.trim());
+    }
+
+    sb.addEventListener('click', ()=> {
+      if (!validateCityInput(si.value)) {
+        showCityError('Please enter a valid city for the selected country.');
+        return;
+      }
+      setCity(si.value);
+    });
+    si.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        if (!validateCityInput(si.value)) {
+          showCityError('Please enter a valid city for the selected country.');
+          return;
+        }
+        setCity(si.value);
+      } else {
+        handleSuggestKey(e);
+      }
+    });
     si.addEventListener('input', ()=> debouncedSuggest(si.value));
     si.addEventListener('focus', ()=>{ const v=(si.value||'').trim(); if(v.length<2){ if(state.recent && state.recent.length){ renderSuggestions(state.recent); } } });
     si.addEventListener('blur', ()=> setTimeout(hideSuggestions, 120));
@@ -548,10 +649,11 @@
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(historicalMap);
   }
   function updateHistoricalMap(monthOffset){
-    if(!historicalMap || !state.currentCity) return;
+    if(!historicalMap) return;
+    const city = state.currentCity || 'Bengaluru';
     historicalMarkers.forEach(m => historicalMap.removeLayer(m));
     historicalMarkers.clear();
-    const data = genHistoricalData(state.currentCity, monthOffset);
+    const data = genHistoricalData(city, monthOffset);
     data.forEach(int=>{
       const color = int.phase==='GREEN'?'#31c754':int.phase==='AMBER'?'#ffb347':'#ff4d4d';
       const m = L.circleMarker([int.lat,int.lng],{radius:7,color,fillColor:color,fillOpacity:.85,weight:2}).addTo(historicalMap);
