@@ -212,9 +212,9 @@ textarea { min-height: 120px; }
 .meter-bar.green { background:#31c754; }
 .meter-bar.primary { background:var(--brand); }
 .meter-bar.blue { background:#4f8cff; }
-.metrics { display:flex; flex-direction:column; gap:18px; padding:18px 0; }
-.metric-line { display:flex; align-items:center; gap:18px; font-size:20px; font-weight:500; }
-.metric-value { font-size:32px; font-weight:700; color:var(--brand); letter-spacing:1px; }
+.metrics { display:flex; flex-direction:column; gap:10px; }
+.metric-line { display:flex; align-items:baseline; gap:8px; }
+.metric-value { font-size:24px; font-weight:600; }
 .metric-label { font-size:11px; letter-spacing:.5px; text-transform:uppercase; opacity:.65; }
 /* Location bar */
 
