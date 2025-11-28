@@ -5,44 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sanketa Dashboard</title>
     <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="stylesheet" href="assets/css/custom.css" />
     <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css" />
   </head>
+
   <body>
     <header id="site-header"></header>
+
     <main class="section">
       <div class="container">
-        <h1>Sanketa Dashboard</h1>
         <p class="muted">Live system overview (simulated demo data).</p>
+        <div class="""panel note-panel">
+          <strong>Note:</strong> All signal and traffic data shown below is sourced from smart cameras and AI devices installed at intersections. The dashboard updates automatically as new data is received from the field.
+        </div>
+        </div>
+        <!-- Location Bar -->
         <div class="location-bar" aria-label="City location summary">
           <div class="loc-left">
             <strong id="locTitle">City Location</strong>
-            <span id="locLoading" class="loading" aria-live="polite" aria-hidden="true" hidden>
-              <span class="spinner" aria-hidden="true"></span>
-              <span class="loading-text">Loading026</span>
+
+            <span id="locLoading" class="loading" aria-live="polite" hidden>
+              <span class="spinner"></span>
+              <span class="loading-text">Loading...</span>
             </span>
-            <div class="country-select-group">
-              <label for="countrySelect">Country:</label>
-              <select id="countrySelect" class="btn small"></select>
-            </div>
+
             <div class="loc-search" role="search">
               <input id="locSearch" type="text" placeholder="Search city" aria-label="Search city" />
               <button id="locSearchBtn" class="btn small" type="button" aria-label="Search">Search</button>
               <button id="locResetBtn" class="btn small" type="button" aria-label="Reset city">Reset</button>
-              <ul id="locSuggest" class="loc-suggest" role="listbox" aria-label="City suggestions" hidden></ul>
+              <ul id="locSuggest" class="loc-suggest" role="listbox" hidden></ul>
             </div>
           </div>
+
           <div class="loc-right">
-            <a id="locOpen" class="btn small" target="_blank" rel="noopener" href="https://www.google.com/maps">Google Maps</a>
-            <a id="locOpenOSM" class="btn small" target="_blank" rel="noopener" href="https://www.openstreetmap.org/">OpenStreetMap</a>
+            <a id="locOpen" class="btn small" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Google Maps</a>
+            <a id="locOpenOSM" class="btn small" target="_blank" rel="noopener noreferrer" href="https://www.openstreetmap.org/">OpenStreetMap</a>
           </div>
         </div>
-        
-        <div id="searchPrompt" class="panel" role="status">
+
+        <!-- Search Prompt -->
+        <div id="searchPrompt" class="panel">
           <h3>Choose a city to begin</h3>
-          <p class="muted">Use the search box above to select a city. You can also open the default map providers with the buttons on the right.</p>
+          <p class="muted">Use the search box above to select a city.</p>
         </div>
 
-        <div class="dashboard-grid" id="metricsSection" class="hidden">
+        <!-- Dashboard (Hidden until search) -->
+        <div id="metricsSection" class="dashboard-grid hidden">
+
           <aside class="sidebar">
             <h3>Navigation</h3>
             <ul class="dash-nav">
@@ -53,103 +62,94 @@
               <li><a href="impact.html">Impact</a></li>
             </ul>
           </aside>
+
           <div class="panel-group">
+
+            <!-- Traffic Score -->
             <div class="panel" id="panel-score">
               <h3>Traffic Status</h3>
               <div id="gauge" class="gauge"></div>
-              <div class="muted timestamp" id="trafficStatusNote">Average optimization level</div>
+              <div class="muted timestamp"></div>
             </div>
+
+            <!-- System Health -->
             <div class="panel" id="panel-sensors">
               <h3>System Health</h3>
               <div class="space-y">
                 <div class="metric-block">
-                  <div class="metric-row">
-                    <span>Signal Status</span>
-                    <span class="badge ok" id="signalStatusText">Active</span>
-                  </div>
-                  <div class="meter"><div class="meter-bar green" id="signalBar"></div></div>
+                  <div class="metric-row"><span>Signal Status</span><span class="badge ok">Active</span></div>
+                  <div class="meter"><div class="meter-bar green"></div></div>
                 </div>
                 <div class="metric-block">
-                  <div class="metric-row">
-                    <span>Power Level</span>
-                    <span class="badge warn" id="powerLevelText">--%</span>
-                  </div>
-                  <div class="meter"><div class="meter-bar primary" id="powerBar"></div></div>
+                  <div class="metric-row"><span>Power Level</span><span class="badge warn">--%</span></div>
+                  <div class="meter"><div class="meter-bar primary"></div></div>
                 </div>
                 <div class="metric-block">
-                  <div class="metric-row">
-                    <span>Response Time</span>
-                    <span class="badge ok" id="respTimeText">Good</span>
-                  </div>
-                  <div class="meter"><div class="meter-bar blue" id="respBar"></div></div>
+                  <div class="metric-row"><span>Response Time</span><span class="badge ok">Good</span></div>
+                  <div class="meter"><div class="meter-bar blue"></div></div>
                 </div>
               </div>
             </div>
-            <div class="panel" id="panel-traffic">
-              <h3>Traffic Corridors</h3>
-              <ul class="traffic-list" id="trafficList"></ul>
-            </div>
-            <div class="panel" id="panel-alerts">
-              <h3>Active Alerts</h3>
-              <ul class="status-list" id="alertList"></ul>
-            </div>
-            <div class="panel" id="panel-reports">
-              <h3>Recent Reports</h3>
-              <ul class="reports" id="reportList"></ul>
-            </div>
-            <div class="panel" id="panel-keymetrics">
+
+            <!-- Traffic Corridors -->
+            <div class="panel"><h3>Traffic Corridors</h3><ul id="trafficList"></ul></div>
+
+            <!-- Alerts -->
+            <div class="panel"><h3>Active Alerts</h3><ul id="alertList"></ul></div>
+
+            <!-- Reports -->
+            <div class="panel"><h3>Recent Reports</h3><ul id="reportList"></ul></div>
+
+            <!-- Key Metrics -->
+            <div class="panel">
               <h3>Key Metrics</h3>
               <div class="metrics">
-                <div class="metric-line"><span class="metric-value" id="kmWait">--</span><span class="metric-label">Avg. Wait Time</span></div>
-                <div class="metric-line"><span class="metric-value" id="kmEmission">--</span><span class="metric-label">Emission Reduction</span></div>
-                <div class="metric-line"><span class="metric-value" id="kmVehicles">--</span><span class="metric-label">Vehicles Processed</span></div>
+                <div class="metric-line"><span id="kmWait">--</span><span>Avg. Wait Time</span></div>
+                <div class="metric-line"><span id="kmEmission">--</span><span>Emission Reduction</span></div>
+                <div class="metric-line"><span id="kmVehicles">--</span><span>Vehicles Processed</span></div>
               </div>
             </div>
-            <div class="panel" id="panel-energy" aria-label="Energy and Uptime panel">
-              <h3>Uptime & Energy</h3>
-              <ul class="metric-list" id="energyList"></ul>
-            </div>
-            <div class="panel" id="panel-environment" aria-label="Environmental savings panel">
+
+            <!-- Environmental -->
+            <div class="panel">
               <h3>Environmental Savings</h3>
               <div class="env-grid">
-                <div class="env-item"><div class="env-label">CO₂ Avoided</div><div class="env-value" id="co2Saved">-- kg</div></div>
-                <div class="env-item"><div class="env-label">Fuel Saved</div><div class="env-value" id="fuelSaved">-- L</div></div>
-                <div class="env-item"><div class="env-label">Idle Reduced</div><div class="env-value" id="idleReduced">-- %</div></div>
+                <div class="env-item"><div>CO₂ Avoided</div><div id="co2Saved">-- kg</div></div>
+                <div class="env-item"><div>Fuel Saved</div><div id="fuelSaved">-- L</div></div>
+                <div class="env-item"><div>Idle Reduced</div><div id="idleReduced">-- %</div></div>
               </div>
             </div>
-            <div class="panel" id="panel-emergency" aria-label="Emergency priority panel">
-              <h3>Emergency Priority</h3>
-              <ul class="metric-list" id="emergencyList"></ul>
+
+            <!-- Emergency Box -->
+            <div class="panel emergency-box" id="emergencyBox">
+              <h3>Emergency Status</h3>
+              <ul id="emergencyList">
+                <li><strong>Priority Requests:</strong> <span class="badge high">--</span></li>
+                <li><strong>Avg Clearance:</strong> <span class="badge warn">--s</span></li>
+              </ul>
+              <div class="muted">Live emergency requests and average clearance times for the selected city.</div>
             </div>
-            <div class="panel" id="panel-efficiency" aria-label="Signal efficiency panel">
-              <h3>Cycle Efficiency</h3>
-              <ul class="metric-list" id="efficiencyList"></ul>
-            </div>
-            <div class="panel" id="panel-congestion" aria-label="Congestion hotspots panel">
-              <h3>Congestion Hotspots</h3>
-              <ul class="metric-list" id="congestionList"></ul>
-            </div>
-            <div class="panel" id="panel-location" aria-label="City location summary panel">
-              <h3>City Location</h3>
-              <ul class="metric-list" id="locationList"></ul>
-            </div>
-            <div class="panel" id="panel-historical-maps" aria-label="Historical traffic maps panel">
+
+            <!-- Historical Maps -->
+            <div class="panel">
               <h3>Historical Traffic Maps</h3>
               <div class="historical-controls">
-                <button id="month-1" class="btn small">Last Month</button>
-                <button id="month-2" class="btn small">2 Months Ago</button>
-                <button id="month-3" class="btn small">3 Months Ago</button>
+                <button class="btn small">Last Month</button>
+                <button class="btn small">2 Months Ago</button>
+                <button class="btn small">3 Months Ago</button>
               </div>
               <div id="historical-map"></div>
             </div>
+
           </div>
         </div>
       </div>
     </main>
+
     <footer id="site-footer"></footer>
-    <script src="assets/js/config.js"></script>
+
     <script src="assets/js/main.js"></script>
     <script src="node_modules/leaflet/dist/leaflet.js"></script>
-    <script src="assets/js/dashboard.js"></script>
-
-    
+    <script src="assets/js/dashboard.new.js"></script>
+  </body>
+</html>

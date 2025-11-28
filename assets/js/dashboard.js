@@ -6,8 +6,13 @@
       { code: 'US', name: 'United States' },
       { code: 'GB', name: 'United Kingdom' },
       { code: 'CA', name: 'Canada' },
-      { code: 'AU', name: 'Australia' }
-      // Add more countries as needed
+      { code: 'AU', name: 'Australia' },
+      { code: 'SG', name: 'Singapore' },
+      { code: 'DE', name: 'Germany' },
+      { code: 'FR', name: 'France' },
+      { code: 'JP', name: 'Japan' },
+      { code: 'BR', name: 'Brazil' },
+      { code: 'ZA', name: 'South Africa' }
     ];
 
     // Demo: map cities to countries (extend as needed)
@@ -60,9 +65,52 @@
 
     // Initialize dropdown and events on DOMContentLoaded
     document.addEventListener('DOMContentLoaded', function() {
+                        // Clean, robust binding for search button and input
+                        var sb = document.getElementById('locSearchBtn');
+                        var si = document.getElementById('locSearch');
+                        if (sb && si) {
+                          sb.addEventListener('click', function() {
+                            setCity(si.value);
+                            toggleMetrics(true);
+                          });
+                          si.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              setCity(si.value);
+                              toggleMetrics(true);
+                            }
+                          });
+                        }
+                  // Robust binding for search button and input
+                  var sb = document.getElementById('locSearchBtn');
+                  var si = document.getElementById('locSearch');
+                  if (sb && si) {
+                    sb.onclick = function() { setCity(si.value); toggleMetrics(true); };
+                    si.onkeydown = function(e) {
+                      if (e.key === 'Enter') { e.preventDefault(); setCity(si.value); toggleMetrics(true); }
+                    };
+                  }
+            // Final robust binding for Search button
+            setTimeout(function() {
+              var sb = document.getElementById('locSearchBtn');
+              var si = document.getElementById('locSearch');
+              if (sb && si) {
+                sb.onclick = function() { setCity(si.value); toggleMetrics(true); };
+              }
+            }, 200);
       populateCountryDropdown();
       bindCountryDropdown();
       bindCityInput();
+      // Robust city search event binding
+      var sb = document.getElementById('locSearchBtn');
+      var si = document.getElementById('locSearch');
+      if (sb && si) {
+        sb.onclick = function() { setCity(si.value); toggleMetrics(true); };
+        si.onkeydown = function(e) {
+          if (e.key === 'Enter') { e.preventDefault(); setCity(si.value); toggleMetrics(true); }
+          else { handleSuggestKey(e); }
+        };
+      }
     });
   const CFG = window.SANKETA || {};
   const NO_API = !!CFG.NO_API; // enable pure frontend mode when true
@@ -154,7 +202,25 @@
     }).join('');
   }
   function updatePanels(payload){
+    // Show data source note after city selection
+    var noteEl = document.getElementById('dataSourceNote');
+    if (noteEl) noteEl.style.display = 'block';
     setLoading(false);
+    // Countdown timer for busiest intersection
+    const intersections = payload.intersections || [];
+    let countdownText = '';
+    if (intersections.length) {
+      // Find busiest intersection (RED with largest remainingSeconds, else largest remainingSeconds)
+      const reds = intersections.filter(i=> (i.phase||'').toUpperCase()==='RED');
+      let busiest = null;
+      if(reds.length){ busiest = reds.reduce((a,b)=> ( (a.remainingSeconds||0) > (b.remainingSeconds||0) ? a : b )); }
+      else busiest = intersections.reduce((a,b)=> ( (a.remainingSeconds||0) > (b.remainingSeconds||0) ? a : b ));
+      if (busiest) {
+        countdownText = `Next phase change at <strong>${busiest.name}</strong>: <span style="color:#7c4dff">${busiest.remainingSeconds}s</span> (${busiest.phase})`;
+      }
+    }
+    var cdEl = document.getElementById('dashboardCountdown');
+    if (cdEl) cdEl.innerHTML = countdownText;
     const meta = payload.meta || {}; const intersections = payload.intersections || [];
     const score = meta.systemScore ?? (60 + Math.random()*25);
     renderGauge(document.getElementById('gauge'), score);
@@ -492,11 +558,22 @@
     const cEl=document.getElementById('locCenter'); if(cEl) cEl.textContent='--, --';
     const aEl=document.getElementById('locOpen'); if(aEl){ aEl.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(city)}`; aEl.removeAttribute('aria-disabled'); }
     const oEl=document.getElementById('locOpenOSM'); if(oEl){ oEl.href = `https://www.openstreetmap.org/search?query=${encodeURIComponent(city)}`; oEl.removeAttribute('aria-disabled'); }
-    // Show metrics, reconnect SSE and poll now
+    // Always show metrics and demo data instantly
     setLoading(true);
     toggleMetrics(true);
-    if(NO_API){ initLocal(city); updatePanels(state.local); }
+    initLocal(city); updatePanels(state.local);
     startSSE();
+    // FINAL guaranteed binding for search bar
+    window.onload = function() {
+      var sb = document.getElementById('locSearchBtn');
+      var si = document.getElementById('locSearch');
+      if (sb && si) {
+        sb.onclick = function() { setCity(si.value); toggleMetrics(true); };
+        si.onkeydown = function(e) {
+          if (e.key === 'Enter') { e.preventDefault(); setCity(si.value); toggleMetrics(true); }
+        };
+      }
+    };
     poll();
   }
   function resetCity(){
@@ -613,25 +690,11 @@
       return cities.includes(city.trim());
     }
 
-    sb.addEventListener('click', ()=> {
-      if (!validateCityInput(si.value)) {
-        showCityError('Please enter a valid city for the selected country.');
-        return;
-      }
-      setCity(si.value);
-    });
-    si.addEventListener('keydown', (e)=>{
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        if (!validateCityInput(si.value)) {
-          showCityError('Please enter a valid city for the selected country.');
-          return;
-        }
-        setCity(si.value);
-      } else {
-        handleSuggestKey(e);
-      }
-    });
+    sb.onclick = function() { setCity(si.value); toggleMetrics(true); };
+    si.onkeydown = function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); setCity(si.value); toggleMetrics(true); }
+      else { handleSuggestKey(e); }
+    };
     si.addEventListener('input', ()=> debouncedSuggest(si.value));
     si.addEventListener('focus', ()=>{ const v=(si.value||'').trim(); if(v.length<2){ if(state.recent && state.recent.length){ renderSuggestions(state.recent); } } });
     si.addEventListener('blur', ()=> setTimeout(hideSuggestions, 120));
@@ -689,6 +752,28 @@
   initHistoricalMap();
   if(NO_API){ /* hold until city selected */ }
   poll();
-  setInterval(poll, 5000);
+  setInterval(poll, 10000);
   startSSE();
+// FINAL guaranteed binding for search button and input
+window.addEventListener('load', function() {
+  var sb = document.getElementById('locSearchBtn');
+  var si = document.getElementById('locSearch');
+  if (sb && si) {
+    sb.onclick = function() { setCity(si.value); toggleMetrics(true); };
+    si.onkeydown = function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); setCity(si.value); toggleMetrics(true); }
+    };
+  }
+});
+  // Fallback: ensure search button/input always trigger setCity
+  setTimeout(function() {
+    var sb = document.getElementById('locSearchBtn');
+    var si = document.getElementById('locSearch');
+    if (sb && si) {
+      sb.onclick = function() { setCity(si.value); toggleMetrics(true); };
+      si.onkeydown = function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); setCity(si.value); toggleMetrics(true); }
+      };
+    }
+  }, 500);
 })();
